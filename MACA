@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guida Interattiva alla Microeconomia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Ho progettato l'applicazione con una barra di navigazione laterale fissa e un'area di contenuto principale. Questa struttura è ideale per materiale didattico perché consente agli utenti di navigare facilmente tra gli argomenti senza perdere il contesto. L'utente seleziona un argomento dalla barra laterale e il contenuto corrispondente viene visualizzato nell'area principale. L'interattività è introdotta in modo mirato: un grafico dinamico per il concetto fondamentale del vincolo di bilancio e semplici esercizi a comparsa per gli altri argomenti, per rinforzare l'apprendimento senza sovraccaricare l'utente. Questa scelta favorisce un'esplorazione chiara e un apprendimento attivo. -->
+    <!-- Visualization & Content Choices: Per la Teoria del Consumatore, l'obiettivo è illustrare la relazione dinamica tra reddito, prezzi e possibilità di acquisto. Un grafico a linee interattivo (Chart.js/Canvas) con slider per modificare i parametri è la scelta migliore perché rende un concetto astratto tangibile e sperimentabile. Per gli altri argomenti, come Monopolio e Teoria dei Giochi, l'obiettivo è il ripasso e l'autovalutazione. Semplici sezioni di testo strutturate in HTML/Tailwind, abbinate a pulsanti che rivelano domande e risposte, sono efficaci per consolidare le conoscenze. Questa combinazione di visualizzazione complessa e micro-interazioni semplici offre un'esperienza di apprendimento bilanciata. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfdfc;
+            color: #333;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .nav-link {
+            transition: all 0.2s ease-in-out;
+        }
+        .nav-link.active {
+            background-color: #e0e7ff;
+            color: #4f46e5;
+            font-weight: 500;
+        }
+        .nav-link:hover {
+            background-color: #f0f2f5;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .exercise-content {
+            display: none;
+            border-left: 3px solid #6366f1;
+            margin-top: 1rem;
+            padding-left: 1rem;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #6366f1;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+        }
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex min-h-screen">
+        <aside class="w-64 bg-white border-r border-gray-200 p-5 hidden md:block sticky top-0 h-screen overflow-y-auto">
+            <h1 class="text-xl font-bold text-indigo-600 mb-6">Microeconomia</h1>
+            <nav id="desktop-nav" class="space-y-2">
+            </nav>
+        </aside>
+
+        <main class="flex-1 p-4 md:p-8 lg:p-10 bg-gray-50/50">
+            <div class="md:hidden mb-4">
+                 <select id="mobile-nav" class="w-full p-2 border rounded-md bg-white">
+                 </select>
+            </div>
+            
+            <div id="content-area">
+                <section id="home" class="content-section active">
+                    <div class="card">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Benvenuto nella Guida Interattiva di Microeconomia</h2>
+                        <p class="text-gray-600 leading-relaxed">
+                            Questa applicazione è progettata per aiutarti a esplorare e comprendere i concetti fondamentali della microeconomia in modo dinamico e interattivo. Utilizza il menu di navigazione per spostarti tra i diversi argomenti del corso. Ogni sezione offre spiegazioni chiare, esempi pratici e strumenti interattivi per consolidare il tuo apprendimento.
+                        </p>
+                        <p class="mt-4 text-gray-600 leading-relaxed">
+                            Inizia selezionando un argomento dal menu a sinistra (o dal menu a tendina in alto su dispositivi mobili) per immergerti nei modelli che descrivono il comportamento dei consumatori, delle imprese e il funzionamento dei mercati.
+                        </p>
+                    </div>
+                </section>
+
+                <section id="consumatore" class="content-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Teoria del Comportamento del Consumatore</h2>
+                    <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                           Questa sezione analizza come i consumatori prendono decisioni di acquisto. Esploriamo il concetto di vincolo di bilancio, che definisce le combinazioni di beni che un consumatore può permettersi, e le preferenze, che descrivono cosa il consumatore desidera. L'interazione tra questi due elementi determina la scelta ottima.
+                       </p>
+                       <button id="tts-consumatore" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                   </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-3">Vincolo di Bilancio Interattivo</h3>
+                        <p class="text-sm text-gray-500 mb-4">
+                            Usa gli slider per modificare il reddito e i prezzi dei due beni. Osserva come cambia la retta di bilancio sul grafico. La retta rappresenta tutte le combinazioni di Bene 1 e Bene 2 che esauriscono completamente il reddito del consumatore.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 items-center">
+                            <div>
+                                <label for="reddito" class="block text-sm font-medium text-gray-700">Reddito (R): <span id="reddito-val" class="font-bold text-indigo-600">100</span>€</label>
+                                <input type="range" id="reddito" min="20" max="200" value="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="prezzo1" class="block text-sm font-medium text-gray-700">Prezzo Bene 1 (p1): <span id="prezzo1-val" class="font-bold text-indigo-600">10</span>€</label>
+                                <input type="range" id="prezzo1" min="1" max="20" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label for="prezzo2" class="block text-sm font-medium text-gray-700">Prezzo Bene 2 (p2): <span id="prezzo2-val" class="font-bold text-indigo-600">20</span>€</label>
+                                <input type="range" id="prezzo2" min="1" max="40" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="vincoloBilancioChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6 mt-6">
+                         <div class="card">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Preferenze e Utilità</h3>
+                            <p class="text-gray-600">
+                                Le <strong>preferenze</strong> indicano i gusti del consumatore. Vengono rappresentate graficamente dalle <strong>curve di indifferenza</strong>, che uniscono tutti i panieri di beni che danno al consumatore lo stesso livello di soddisfazione. La <strong>funzione di utilità</strong> assegna un valore numerico a ogni paniere, permettendo di ordinare le preferenze. Il <strong>Saggio Marginale di Sostituzione (SMS)</strong> misura la pendenza della curva di indifferenza e indica a quante unità di un bene il consumatore è disposto a rinunciare per ottenere un'unità in più dell'altro, mantenendo l'utilità costante.
+                            </p>
+                        </div>
+                        <div class="card">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Scelta Ottima</h3>
+                            <p class="text-gray-600">
+                                La <strong>scelta ottima</strong> è il paniere di beni, sul vincolo di bilancio, che massimizza l'utilità del consumatore. Graficamente, corrisponde al punto in cui la curva di indifferenza più alta possibile è tangente alla retta di bilancio. In questo punto, il Saggio Marginale di Sostituzione è uguale al rapporto tra i prezzi dei beni (SMS = p1/p2).
+                            </p>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="produttore" class="content-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Scelta Ottima del Produttore</h2>
+                    <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                            Questa sezione esplora le decisioni delle imprese. Si analizza come le imprese scelgono la combinazione di input (lavoro, capitale) per produrre in modo efficiente (minimizzando i costi) e come determinano la quantità di output da offrire sul mercato per massimizzare i profitti.
+                       </p>
+                       <button id="tts-produttore" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Produzione, Tecnologia e Costi</h3>
+                        <p class="text-gray-600">
+                            La <strong>funzione di produzione</strong> descrive la relazione tecnologica tra la quantità di input utilizzati e la quantità massima di output ottenibile. Gli <strong>isoquanti</strong> rappresentano tutte le combinazioni di input che permettono di produrre lo stesso livello di output. Le rette di <strong>isocosto</strong> mostrano tutte le combinazioni di input che hanno lo stesso costo totale. La scelta ottima dei fattori produttivi si ha nel punto di tangenza tra l'isoquanto e la retta di isocosto più bassa possibile. La <strong>teoria dei costi</strong> analizza l'andamento dei costi (totali, medi, marginali) al variare della produzione, sia nel breve che nel lungo periodo.
+                        </p>
+                        <div class="flex space-x-2 mt-4">
+                            <button onclick="toggleExercise('ex-produttore')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Mostra Esercizio</button>
+                             <button onclick="generateExercise('produttore', 'Efficienza produttiva, isoquanti, isocosti')" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition">✨ Genera Esercizio</button>
+                        </div>
+                        <div id="ex-produttore" class="exercise-content">
+                            <p class="font-semibold mb-2">Domanda: Se il costo del lavoro aumenta, come si modifica la combinazione ottima di input per un'impresa che vuole mantenere lo stesso livello di produzione?</p>
+                            <p class="text-gray-600"><strong>Risposta:</strong> L'impresa sostituirà il fattore diventato relativamente più costoso (lavoro) con il fattore diventato relativamente meno costoso (capitale). La nuova combinazione ottima, sullo stesso isoquanto, comporterà un minore impiego di lavoro e un maggiore impiego di capitale.</p>
+                        </div>
+                        <div id="generated-ex-produttore" class="exercise-content">
+                            <div id="loading-produttore" class="hidden flex justify-center items-center mt-4">
+                                <div class="loader"></div>
+                                <span class="ml-2 text-gray-500">Generando...</span>
+                            </div>
+                            <div id="content-produttore" class="hidden"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="monopolio" class="content-section">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Monopolio</h2>
+                    <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                           Il monopolio è una forma di mercato in cui un'unica impresa produce un bene che non ha sostituti stretti. Il monopolista ha potere di mercato, cioè la capacità di influenzare il prezzo del bene.
+                       </p>
+                       <button id="tts-monopolio" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Massimizzazione del Profitto e Inefficienza</h3>
+                        <p class="text-gray-600">
+                            Il monopolista massimizza il profitto producendo la quantità per cui il <strong>ricavo marginale (RMg) è uguale al costo marginale (CMg)</strong>. A differenza della concorrenza perfetta, il prezzo di monopolio è superiore al costo marginale (P > CMg). Questo porta a una quantità prodotta inferiore e a un prezzo più alto rispetto alla concorrenza perfetta, generando una <strong>perdita secca di benessere</strong> per la società. L'impresa monopolista può inoltre realizzare profitti economici positivi anche nel lungo periodo, grazie alle barriere all'entrata che impediscono a nuove imprese di entrare nel mercato.
+                        </p>
+                         <div class="flex space-x-2 mt-4">
+                             <button onclick="toggleExercise('ex-monopolio')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Mostra Esercizio</button>
+                            <button onclick="generateExercise('monopolio', 'Massimizzazione del profitto in monopolio, ricavo marginale')" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition">✨ Genera Esercizio</button>
+                        </div>
+                        <div id="ex-monopolio" class="exercise-content">
+                            <p class="font-semibold mb-2">Domanda: Perché la curva di ricavo marginale del monopolista si trova sempre al di sotto della curva di domanda?</p>
+                            <p class="text-gray-600"><strong>Risposta:</strong> Perché per vendere un'unità aggiuntiva, il monopolista deve abbassare il prezzo non solo per quell'unità, ma per tutte le unità vendute. Pertanto, il ricavo aggiuntivo (marginale) generato dalla vendita di un'unità in più è inferiore al prezzo a cui tale unità viene venduta.</p>
+                        </div>
+                        <div id="generated-ex-monopolio" class="exercise-content">
+                            <div id="loading-monopolio" class="hidden flex justify-center items-center mt-4">
+                                <div class="loader"></div>
+                                <span class="ml-2 text-gray-500">Generando...</span>
+                            </div>
+                            <div id="content-monopolio" class="hidden"></div>
+                        </div>
+                    </div>
+                </section>
+                
+                <section id="giochi" class="content-section">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Teoria dei Giochi</h2>
+                     <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                           La teoria dei giochi è lo studio delle decisioni strategiche in situazioni in cui il risultato (payoff) di un agente dipende non solo dalle proprie azioni, ma anche dalle azioni degli altri agenti.
+                       </p>
+                       <button id="tts-giochi" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                     </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Elementi di un Gioco ed Equilibrio di Nash</h3>
+                        <p class="text-gray-600">
+                            Un gioco è definito da: giocatori, strategie (le azioni disponibili per ogni giocatore) e payoff (i risultati per ogni combinazione di strategie). Una <strong>strategia dominante</strong> è una strategia che risulta la migliore per un giocatore, indipendentemente da ciò che fanno gli altri. L'<strong>Equilibrio di Nash</strong> è una situazione in cui nessun giocatore ha un incentivo a cambiare unilateralmente la propria strategia, data la strategia scelta dagli altri giocatori. È un concetto di equilibrio stabile, anche se non garantisce un risultato efficiente (come dimostra il famoso Dilemma del Prigioniero).
+                        </p>
+                        <div class="flex space-x-2 mt-4">
+                            <button onclick="toggleExercise('ex-giochi')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Mostra Esercizio</button>
+                            <button onclick="generateExercise('giochi', 'Dilemma del Prigioniero, equilibrio di Nash')" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition">✨ Genera Esercizio</button>
+                        </div>
+                        <div id="ex-giochi" class="exercise-content">
+                            <p class="font-semibold mb-2">Domanda: Nel Dilemma del Prigioniero, perché "confessare" è una strategia dominante per entrambi i giocatori, anche se porta a un risultato peggiore per entrambi rispetto a "non confessare"?</p>
+                            <p class="text-gray-600"><strong>Risposta:</strong> Indipendentemente da ciò che fa l'altro prigioniero, per ogni singolo giocatore è sempre meglio confessare. Se l'altro confessa, è meglio confessare (es. 5 anni di prigione invece di 10). Se l'altro non confessa, è comunque meglio confessare (es. 0 anni invece di 1). Poiché entrambi ragionano così, entrambi confessano, finendo in una situazione sub-ottimale.</p>
+                        </div>
+                        <div id="generated-ex-giochi" class="exercise-content">
+                            <div id="loading-giochi" class="hidden flex justify-center items-center mt-4">
+                                <div class="loader"></div>
+                                <span class="ml-2 text-gray-500">Generando...</span>
+                            </div>
+                            <div id="content-giochi" class="hidden"></div>
+                        </div>
+                    </div>
+                </section>
+                 <section id="oligopolio" class="content-section">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Oligopolio</h2>
+                     <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                           L'oligopolio è una forma di mercato caratterizzata da un piccolo numero di imprese che interagiscono strategicamente. Le decisioni di ogni impresa (su prezzo o quantità) influenzano significativamente i profitti delle altre.
+                       </p>
+                       <button id="tts-oligopolio" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                     </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Modelli di Oligopolio</h3>
+                        <p class="text-gray-600">
+                           Esistono diversi modelli per analizzare l'oligopolio:
+                           <br>• <strong>Modello di Cournot:</strong> le imprese competono sulla quantità, scegliendola simultaneamente. L'equilibrio si trova in un punto intermedio tra la concorrenza perfetta e il monopolio.
+                           <br>• <strong>Modello di Bertrand:</strong> le imprese competono sul prezzo. Se i beni sono omogenei, la competizione spinge il prezzo verso il costo marginale, portando a un risultato simile a quello della concorrenza perfetta.
+                           <br>• <strong>Modello di Stackelberg:</strong> è un modello sequenziale in cui un'impresa (leader) sceglie la propria quantità prima dell'altra (follower), che osserva la scelta del leader e poi decide.
+                           <br>La <strong>collusione</strong> (o cartello) si verifica quando le imprese si accordano per agire come un monopolista, fissando prezzi e quantità per massimizzare i profitti congiunti. Tuttavia, i cartelli sono spesso instabili perché ogni impresa ha un incentivo a deviare dall'accordo.
+                        </p>
+                        <div class="flex space-x-2 mt-4">
+                            <button onclick="generateExercise('oligopolio', 'Modelli di oligopolio, Cournot, Bertrand, Stackelberg, collusione')" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition">✨ Genera Esercizio</button>
+                        </div>
+                        <div id="generated-ex-oligopolio" class="exercise-content">
+                            <div id="loading-oligopolio" class="hidden flex justify-center items-center mt-4">
+                                <div class="loader"></div>
+                                <span class="ml-2 text-gray-500">Generando...</span>
+                            </div>
+                            <div id="content-oligopolio" class="hidden"></div>
+                        </div>
+                    </div>
+                </section>
+                 <section id="concorrenza" class="content-section">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Concorrenza Perfetta</h2>
+                     <div class="flex items-center space-x-2 mb-4">
+                       <p class="text-gray-600 leading-relaxed">
+                           La concorrenza perfetta è una forma di mercato ideale caratterizzata da un gran numero di imprese e consumatori, beni omogenei, informazione perfetta e libertà di entrata e uscita.
+                       </p>
+                       <button id="tts-concorrenza" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Equilibrio di Breve e Lungo Periodo</h3>
+                        <p class="text-gray-600">
+                           Nel breve periodo, un'impresa in concorrenza perfetta massimizza il profitto producendo la quantità per cui il <strong>prezzo è uguale al costo marginale (P = CMg)</strong>, a condizione che il prezzo sia superiore al costo medio variabile. Nel lungo periodo, la libertà di entrata e uscita dal mercato fa sì che i profitti economici si azzerino. L'equilibrio di lungo periodo si raggiunge quando il <strong>prezzo è uguale al costo marginale e anche al punto di minimo del costo medio totale (P = CMg = CMeT min)</strong>. Questo garantisce l'efficienza sia produttiva (si produce al minor costo medio) che allocativa (il prezzo riflette il costo marginale di produzione).
+                        </p>
+                        <div class="flex space-x-2 mt-4">
+                            <button onclick="toggleExercise('ex-concorrenza')" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition">Mostra Esercizio</button>
+                            <button onclick="generateExercise('concorrenza', 'Equilibrio in concorrenza perfetta, breve e lungo periodo')" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition">✨ Genera Esercizio</button>
+                        </div>
+                        <div id="ex-concorrenza" class="exercise-content">
+                            <p class="font-semibold mb-2">Domanda: Cosa succede nel lungo periodo in un mercato di concorrenza perfetta se le imprese stanno realizzando profitti economici positivi?</p>
+                            <p class="text-gray-600"><strong>Risposta:</strong> La presenza di profitti attirerà nuove imprese nel mercato. L'ingresso di nuove imprese aumenterà l'offerta totale, causando una diminuzione del prezzo di mercato. Questo processo continuerà fino a quando il prezzo non scenderà al livello del costo medio totale minimo, azzerando i profitti economici e fermando l'ingresso di nuove imprese.</p>
+                        </div>
+                        <div id="generated-ex-concorrenza" class="exercise-content">
+                            <div id="loading-concorrenza" class="hidden flex justify-center items-center mt-4">
+                                <div class="loader"></div>
+                                <span class="ml-2 text-gray-500">Generando...</span>
+                            </div>
+                            <div id="content-concorrenza" class="hidden"></div>
+                        </div>
+                    </div>
+                </section>
+                 <section id="equilibrio" class="content-section">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Equilibrio Generale e Benessere</h2>
+                     <div class="flex items-center space-x-2 mb-4">
+                        <p class="text-gray-600 leading-relaxed">
+                           L'analisi di equilibrio generale studia come i prezzi e le quantità vengono determinati simultaneamente in tutti i mercati, considerando le interdipendenze tra di essi.
+                        </p>
+                        <button id="tts-equilibrio" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                     </div>
+                    <div class="card">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Scatola di Edgeworth e Ottimo Paretiano</h3>
+                        <p class="text-gray-600">
+                           La <strong>Scatola di Edgeworth</strong> è uno strumento grafico utilizzato per analizzare l'allocazione di beni tra due individui. Un'allocazione è <strong>Pareto-efficiente</strong> (o Pareto-ottimale) se non è possibile migliorare la condizione di un individuo senza peggiorare quella di un altro. All'interno della scatola, i punti di Pareto-efficienza si trovano dove le curve di indifferenza dei due individui sono tangenti. L'insieme di tutti i punti Pareto-efficienti forma la <strong>curva dei contratti</strong>. I <strong>due teoremi fondamentali dell'economia del benessere</strong> collegano l'equilibrio di mercato concorrenziale con l'efficienza Paretiana, affermando che (1) ogni equilibrio concorrenziale è Pareto-efficiente e (2) qualsiasi allocazione Pareto-efficiente può essere raggiunta come equilibrio concorrenziale, data un'appropriata redistribuzione iniziale delle risorse.
+                        </p>
+                    </div>
+                </section>
+                 <section id="fallimenti" class="content-section">
+                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Esternalità e Beni Pubblici</h2>
+                     <div class="flex items-center space-x-2 mb-4">
+                        <p class="text-gray-600 leading-relaxed">
+                           Le esternalità e i beni pubblici sono esempi di fallimenti del mercato, situazioni in cui il mercato da solo non riesce a raggiungere un'allocazione efficiente delle risorse.
+                        </p>
+                        <button id="tts-fallimenti" class="px-4 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition whitespace-nowrap">✨ Leggi ad alta voce</button>
+                     </div>
+                     <div class="grid md:grid-cols-2 gap-6">
+                        <div class="card">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Esternalità</h3>
+                            <p class="text-gray-600">
+                                Un'<strong>esternalità</strong> si verifica quando l'azione di un soggetto economico influenza il benessere di un altro soggetto senza che tale effetto si rifletta nei prezzi di mercato. Le esternalità possono essere <strong>negative</strong> (es. inquinamento) o <strong>positive</strong> (es. apicoltore che beneficia un frutteto vicino). In presenza di esternalità, il costo o beneficio sociale diverge da quello privato, portando il mercato a produrre una quantità non ottimale del bene. Le soluzioni possono essere private (Teorema di Coase) o pubbliche (tasse pigouviane, sussidi, regolamentazione).
+                            </p>
+                        </div>
+                        <div class="card">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-2">Beni Pubblici</h3>
+                            <p class="text-gray-600">
+                                I <strong>beni pubblici</strong> sono caratterizzati da due proprietà: <strong>non rivalità</strong> (il consumo da parte di una persona non impedisce il consumo da parte di un'altra) e <strong>non escludibilità</strong> (è impossibile o molto costoso impedire a qualcuno di consumare il bene). Esempi includono la difesa nazionale o l'illuminazione stradale. A causa di queste caratteristiche, gli individui hanno un incentivo a comportarsi da <strong>free-rider</strong> (beneficiare del bene senza pagarlo), portando a una fornitura insufficiente o nulla del bene da parte del mercato privato. Per questo, i beni pubblici sono tipicamente forniti dallo Stato.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+<script>
+    let vincoloBilancioChart;
+
+    const topics = [
+        { id: 'home', name: 'Introduzione' },
+        { id: 'consumatore', name: 'Teoria del Consumatore' },
+        { id: 'produttore', name: 'Teoria del Produttore' },
+        { id: 'monopolio', name: 'Monopolio' },
+        { id: 'giochi', name: 'Teoria dei Giochi' },
+        { id: 'oligopolio', name: 'Oligopolio' },
+        { id: 'concorrenza', name: 'Concorrenza Perfetta' },
+        { id: 'equilibrio', name: 'Equilibrio e Benessere' },
+        { id: 'fallimenti', name: 'Esternalità e Beni Pubblici' }
+    ];
+
+    function setupNavigation() {
+        const desktopNav = document.getElementById('desktop-nav');
+        const mobileNav = document.getElementById('mobile-nav');
+
+        topics.forEach(topic => {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = topic.name;
+            link.classList.add('block', 'p-2', 'rounded-md', 'nav-link');
+            link.dataset.target = topic.id;
+            desktopNav.appendChild(link);
+            
+            const option = document.createElement('option');
+            option.value = topic.id;
+            option.textContent = topic.name;
+            mobileNav.appendChild(option);
+        });
+        
+        const navLinks = document.querySelectorAll('.nav-link');
+        
+        function switchContent(targetId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(targetId).classList.add('active');
+
+            navLinks.forEach(link => {
+                link.classList.toggle('active', link.dataset.target === targetId);
+            });
+            mobileNav.value = targetId;
+        }
+
+        desktopNav.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (e.target.dataset.target) {
+                switchContent(e.target.dataset.target);
+            }
+        });
+
+        mobileNav.addEventListener('change', (e) => {
+            switchContent(e.target.value);
+        });
+        
+        switchContent('home');
+    }
+
+    function createVincoloBilancioChart() {
+        const ctx = document.getElementById('vincoloBilancioChart').getContext('2d');
+        vincoloBilancioChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'Vincolo di Bilancio',
+                        data: [],
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        fill: 'start',
+                        pointRadius: 0,
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Curva di Indifferenza',
+                        data: [],
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Scelta Ottima',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: '#ef4444',
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        showLine: false,
+                    }
+                ],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: 'Quantità Bene 1'
+                        },
+                        beginAtZero: true,
+                        max: 20
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Quantità Bene 2'
+                        },
+                        beginAtZero: true,
+                        max: 10
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: false
+                    },
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                animation: {
+                    duration: 400
+                }
+            }
+        });
+    }
+
+    function updateVincoloBilancioChart() {
+        const reddito = parseFloat(document.getElementById('reddito').value);
+        const prezzo1 = parseFloat(document.getElementById('prezzo1').value);
+        const prezzo2 = parseFloat(document.getElementById('prezzo2').value);
+
+        document.getElementById('reddito-val').textContent = reddito;
+        document.getElementById('prezzo1-val').textContent = prezzo1;
+        document.getElementById('prezzo2-val').textContent = prezzo2;
+
+        const maxBene1 = reddito / prezzo1;
+        const maxBene2 = reddito / prezzo2;
+        
+        vincoloBilancioChart.data.datasets[0].data = [{x: 0, y: maxBene2}, {x: maxBene1, y: 0}];
+
+        const xScale = Math.ceil(maxBene1 / 5) * 5;
+        const yScale = Math.ceil(maxBene2 / 5) * 5;
+        vincoloBilancioChart.options.scales.x.max = Math.max(10, xScale);
+        vincoloBilancioChart.options.scales.y.max = Math.max(5, yScale);
+
+        const a = 0.5;
+        const b = 0.5;
+        const x_ottimo = (a * reddito) / prezzo1;
+        const y_ottimo = (b * reddito) / prezzo2;
+        const U_ottimo = Math.pow(x_ottimo, a) * Math.pow(y_ottimo, b);
+        
+        const indifferenzaData = [];
+        for (let x = 0.1; x <= vincoloBilancioChart.options.scales.x.max; x += 0.2) {
+            const y = Math.pow(U_ottimo / Math.pow(x, a), 1/b);
+            if (y <= vincoloBilancioChart.options.scales.y.max) {
+                 indifferenzaData.push({x: x, y: y});
+            }
+        }
+        
+        vincoloBilancioChart.data.datasets[1].data = indifferenzaData;
+        vincoloBilancioChart.data.datasets[2].data = [{x: x_ottimo, y: y_ottimo}];
+
+        vincoloBilancioChart.update();
+    }
+    
+    function toggleExercise(id) {
+        const content = document.getElementById(id);
+        const button = content.previousElementSibling;
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            button.textContent = 'Mostra Esercizio';
+        } else {
+            content.style.display = 'block';
+            button.textContent = 'Nascondi Esercizio';
+        }
+    }
+
+    const apiKey = "";
+
+    async function generateExercise(topicId, topicName) {
+        const loadingDiv = document.getElementById(`loading-${topicId}`);
+        const contentDiv = document.getElementById(`content-${topicId}`);
+        const generatedContainer = document.getElementById(`generated-ex-${topicId}`);
+        
+        loadingDiv.classList.remove('hidden');
+        contentDiv.classList.add('hidden');
+        generatedContainer.classList.remove('hidden');
+
+        const prompt = `Sei un professore di microeconomia. Genera un esercizio di difficoltà media sul tema '${topicName}'. Fornisci la domanda e poi la risposta completa e dettagliata, usando il formato: 'Domanda: [domanda] Risposta: [risposta]'`;
+
+        try {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: {
+                     parts: [{ text: "Sei un professore di microeconomia che genera esercizi per studenti." }]
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+            
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            if (text) {
+                const [question, answer] = text.split('Risposta:');
+                contentDiv.innerHTML = `
+                    <p class="font-semibold mb-2">${question.replace('Domanda:', '').trim()}</p>
+                    <p class="text-gray-600"><strong>Risposta:</strong> ${answer.trim()}</p>
+                `;
+            } else {
+                contentDiv.innerHTML = `<p class="text-red-500">Errore nella generazione. Riprova.</p>`;
+            }
+        } catch (error) {
+            console.error('API call failed:', error);
+            contentDiv.innerHTML = `<p class="text-red-500">Errore: ${error.message}. Assicurati di essere connesso.</p>`;
+        } finally {
+            loadingDiv.classList.add('hidden');
+            contentDiv.classList.remove('hidden');
+            generatedContainer.classList.remove('hidden');
+        }
+    }
+
+    async function readAloud(topicId) {
+        const loadingDiv = document.getElementById(`loading-${topicId}`);
+        const section = document.getElementById(topicId);
+        const textToRead = section.querySelector('.card').innerText;
+
+        const button = document.getElementById(`tts-${topicId}`);
+        button.disabled = true;
+        button.innerHTML = `<div class="loader-sm border-2 border-gray-100 border-t-2 border-t-indigo-500 rounded-full w-4 h-4 animate-spin"></div>`;
+
+        try {
+            const payload = {
+                contents: [{ parts: [{ text: textToRead }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Kore" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`TTS API error: ${response.statusText}`);
+
+            const result = await response.json();
+            const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            const mimeType = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+
+            if (audioData && mimeType && mimeType.startsWith("audio/")) {
+                const sampleRate = 16000;
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                const wavBlob = pcmToWav(pcm16, sampleRate);
+                const audioUrl = URL.createObjectURL(wavBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+                audio.onended = () => {
+                    button.disabled = false;
+                    button.innerHTML = `✨ Leggi ad alta voce`;
+                };
+            } else {
+                throw new Error("Invalid audio data from API");
+            }
+        } catch (error) {
+            console.error('TTS call failed:', error);
+            button.disabled = false;
+            button.innerHTML = `✨ Leggi ad alta voce`;
+        }
+    }
+
+    function base64ToArrayBuffer(base64) {
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    function pcmToWav(pcmData, sampleRate) {
+        const numChannels = 1;
+        const bytesPerSample = 2;
+        const blockAlign = numChannels * bytesPerSample;
+        const byteRate = sampleRate * blockAlign;
+        const dataLength = pcmData.byteLength;
+        const buffer = new ArrayBuffer(44 + dataLength);
+        const view = new DataView(buffer);
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        let offset = 0;
+        writeString(view, offset, 'RIFF'); offset += 4;
+        view.setUint32(offset, 36 + dataLength, true); offset += 4;
+        writeString(view, offset, 'WAVE'); offset += 4;
+        writeString(view, offset, 'fmt '); offset += 4;
+        view.setUint32(offset, 16, true); offset += 4;
+        view.setUint16(offset, 1, true); offset += 2;
+        view.setUint16(offset, numChannels, true); offset += 2;
+        view.setUint32(offset, sampleRate, true); offset += 4;
+        view.setUint32(offset, byteRate, true); offset += 4;
+        view.setUint16(offset, blockAlign, true); offset += 2;
+        view.setUint16(offset, 16, true); offset += 2;
+        writeString(view, offset, 'data'); offset += 4;
+        view.setUint32(offset, dataLength, true); offset += 4;
+
+        for (let i = 0; i < pcmData.length; i++) {
+            view.setInt16(offset, pcmData[i], true);
+            offset += 2;
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
+    window.onload = function() {
+        setupNavigation();
+        createVincoloBilancioChart();
+        
+        const sliders = ['reddito', 'prezzo1', 'prezzo2'];
+        sliders.forEach(id => {
+            document.getElementById(id).addEventListener('input', updateVincoloBilancioChart);
+        });
+
+        updateVincoloBilancioChart();
+
+        const ttsButtons = document.querySelectorAll('[id^="tts-"]');
+        ttsButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const topicId = button.id.replace('tts-', '');
+                readAloud(topicId);
+            });
+        });
+    };
+
+</script>
+</body>
+</html>
